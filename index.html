@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chopper Chat ⚕</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1a2b;--side:#0a1220;--chat:#0d1825;
+  --border:#1e3050;--bubble-bg:#0f2035;--user-bg:#18091c;
+  --text:#f0f0f0;--muted:#4a7a9a;--accent:#2090d8;
+}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 10%,#1a3a5a22,transparent 55%),radial-gradient(ellipse at 80% 90%,#0a1a3022,transparent 55%);pointer-events:none}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:#08101aee;border-bottom:1px solid var(--border);flex-shrink:0;backdrop-filter:blur(8px);z-index:10}
+.topbar-title{font-family:'Bangers',cursive;font-size:1.6rem;letter-spacing:4px;color:#2090d8;text-shadow:0 0 20px #2090d855}
+.topbar-sub{font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.online{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.65rem;color:#40c8a8}
+.online-dot{width:7px;height:7px;border-radius:50%;background:#40c8a8;box-shadow:0 0 7px #40c8a8;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDE */
+.side{width:220px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:20px 8px 14px;background:var(--side);border-right:1px solid var(--border);gap:10px}
+
+.avatar-wrap{width:170px;height:200px;position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.avatar-wrap:active{transform:scale(.97)}
+
+.bubble{position:absolute;top:-6px;right:-22px;background:#fff;color:#111;font-family:'Bangers',cursive;font-size:.7rem;letter-spacing:1px;padding:4px 10px;border-radius:12px;white-space:nowrap;box-shadow:0 2px 8px #0003;z-index:5;transition:all .3s}
+.bubble::after{content:'';position:absolute;bottom:-6px;left:12px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff}
+
+#chopSVG{width:100%;height:100%;filter:drop-shadow(0 8px 20px #00000066);transition:transform .3s}
+
+.chopper-name{font-family:'Bangers',cursive;font-size:1.2rem;letter-spacing:3px}
+.chopper-role{font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center}
+
+.pills{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.pill{font-size:.55rem;padding:2px 8px;border-radius:7px;font-weight:900;letter-spacing:1px;text-transform:uppercase;transition:all .3s;border:1px solid var(--border);color:var(--muted);background:#0f2035}
+
+/* CHAT */
+.chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--chat)}
+
+.msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.msg{display:flex;flex-direction:column;max-width:84%;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.c{align-self:flex-start}
+.msg.u{align-self:flex-end}
+.mlabel{font-size:.58rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:3px}
+.msg.u .mlabel{text-align:right}
+.mbubble{padding:10px 14px;border-radius:16px;font-size:.9rem;line-height:1.55}
+.msg.c .mbubble{background:var(--bubble-bg);border:1px solid var(--border);border-bottom-left-radius:3px}
+.msg.u .mbubble{background:var(--user-bg);border:1px solid #3a1830;border-bottom-right-radius:3px;color:#ffc8d8}
+em.expr{color:#f7c948;font-style:italic}
+
+.qr{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;flex-shrink:0}
+.qr button{background:#0f2035;border:1px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:700;padding:5px 11px;border-radius:16px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.qr button:hover{background:#1e3a55;color:#fff;border-color:var(--accent)}
+
+.inp-area{display:flex;gap:9px;padding:12px 14px;border-top:1px solid var(--border);background:#08101aee;flex-shrink:0;backdrop-filter:blur(8px)}
+textarea{flex:1;background:#0f2035;border:1px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;padding:10px 14px;border-radius:12px;outline:none;resize:none;min-height:42px;max-height:100px;transition:border-color .2s;line-height:1.4}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--muted)}
+.sbtn{background:var(--accent);border:none;color:#fff;width:42px;height:42px;border-radius:12px;font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px #2090d844;transition:all .15s}
+.sbtn:hover{transform:scale(1.07);box-shadow:0 4px 18px #2090d877}
+.sbtn:active{transform:scale(.95)}
+.sbtn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Typing dots */
+.dots{display:flex;gap:4px;align-items:center;padding:10px 14px}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block}
+.d1{animation:db 1.2s infinite}
+.d2{animation:db 1.2s .2s infinite}
+.d3{animation:db 1.2s .4s infinite}
+@keyframes db{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}
+
+/* Avatar animations */
+@keyframes bounce{0%,100%{transform:translateY(0)}35%{transform:translateY(-18px)}65%{transform:translateY(-7px)}}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-7deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.anim-bounce{animation:bounce .7s ease}
+.anim-shake{animation:shake .5s ease}
+.anim-pulse{animation:pulse .6s ease}
+.anim-idle{animation:idle 3s ease-in-out infinite}
+
+@media(max-width:600px){
+  .side{width:130px}
+  .avatar-wrap{width:110px;height:130px}
+  .chopper-role,.pills{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">⚕ CHOPPER CHAT</div>
+    <div class="topbar-sub">Tony Tony Chopper · One Piece</div>
+  </div>
+  <div class="online"><div class="online-dot"></div>EN LÍNEA</div>
+</div>
+
+<div class="main">
+  <div class="side">
+    <div class="avatar-wrap" id="avatarWrap" onclick="poke()">
+      <div class="bubble" id="bubble">¡FELIZ! uwu</div>
+
+      <svg id="chopSVG" viewBox="0 0 160 210" xmlns="http://www.w3.org/2000/svg">
+        <!-- LEGS -->
+        <ellipse cx="66" cy="197" rx="14" ry="8" fill="#c85010"/>
+        <ellipse cx="94" cy="197" rx="14" ry="8" fill="#c85010"/>
+        <ellipse cx="64" cy="192" rx="11" ry="13" fill="#e06020"/>
+        <ellipse cx="96" cy="192" rx="11" ry="13" fill="#e06020"/>
+
+        <!-- BODY -->
+        <ellipse cx="80" cy="167" rx="38" ry="36" fill="#d4904a"/>
+        <!-- Vest stripes -->
+        <rect x="56" y="147" width="48" height="36" rx="6" fill="#f8e060"/>
+        <rect x="62" y="147" width="8" height="36" rx="3" fill="#fffac0"/>
+        <rect x="74" y="147" width="12" height="36" rx="3" fill="#fffac0"/>
+        <rect x="90" y="147" width="8" height="36" rx="3" fill="#fffac0"/>
+        <path d="M56 147 Q80 140 104 147" fill="none" stroke="#d4a020" stroke-width="2"/>
+
+        <!-- ARMS -->
+        <ellipse cx="46" cy="162" rx="11" ry="18" fill="#d4904a" transform="rotate(-8 46 162)"/>
+        <ellipse cx="114" cy="162" rx="11" ry="18" fill="#d4904a" transform="rotate(8 114 162)"/>
+        <ellipse cx="43" cy="178" rx="10" ry="8" fill="#c8804a"/>
+        <ellipse cx="117" cy="178" rx="10" ry="8" fill="#c8804a"/>
+
+        <!-- NECK -->
+        <rect x="72" y="120" width="16" height="14" rx="6" fill="#d4904a"/>
+
+        <!-- HEAD -->
+        <ellipse cx="80" cy="98" rx="44" ry="42" fill="#e8b870"/>
+        <ellipse cx="80" cy="104" rx="34" ry="32" fill="#f0cc88"/>
+        <ellipse cx="80" cy="114" rx="20" ry="17" fill="#f8dea0"/>
+
+        <!-- EARS -->
+        <ellipse cx="44" cy="84" rx="12" ry="16" fill="#e0a858"/>
+        <ellipse cx="44" cy="84" rx="7" ry="10" fill="#f0cc88"/>
+        <ellipse cx="116" cy="84" rx="12" ry="16" fill="#e0a858"/>
+        <ellipse cx="116" cy="84" rx="7" ry="10" fill="#f0cc88"/>
+
+        <!-- ANTLERS -->
+        <line x1="56" y1="64" x2="46" y2="46" stroke="#8a5020" stroke-width="4" stroke-linecap="round"/>
+        <line x1="46" y1="46" x2="38" y2="34" stroke="#8a5020" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="46" y1="46" x2="52" y2="32" stroke="#8a5020" stroke-width="3" stroke-linecap="round"/>
+        <line x1="104" y1="64" x2="114" y2="46" stroke="#8a5020" stroke-width="4" stroke-linecap="round"/>
+        <line x1="114" y1="46" x2="122" y2="34" stroke="#8a5020" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="114" y1="46" x2="108" y2="32" stroke="#8a5020" stroke-width="3" stroke-linecap="round"/>
+
+        <!-- HAT: brim -->
+        <ellipse cx="80" cy="82" rx="58" ry="13" fill="#1a70b0"/>
+        <ellipse cx="80" cy="80" rx="55" ry="11" fill="#2090d8"/>
+        <!-- Hat body -->
+        <path d="M34 81 Q32 42 80 36 Q128 42 126 81 Z" fill="#2090d8"/>
+        <!-- Hat top -->
+        <ellipse cx="80" cy="37" rx="46" ry="12" fill="#40a8e8"/>
+        <!-- Polka dots -->
+        <circle cx="52" cy="60" r="4" fill="white" opacity=".9"/>
+        <circle cx="68" cy="49" r="4" fill="white" opacity=".9"/>
+        <circle cx="80" cy="57" r="4" fill="white" opacity=".9"/>
+        <circle cx="92" cy="48" r="4" fill="white" opacity=".9"/>
+        <circle cx="108" cy="59" r="4" fill="white" opacity=".9"/>
+        <circle cx="44" cy="72" r="3.5" fill="white" opacity=".9"/>
+        <circle cx="116" cy="71" r="3.5" fill="white" opacity=".9"/>
+        <!-- Pink band -->
+        <path d="M34 81 Q80 74 126 81 Q80 87 34 81Z" fill="#f080a0"/>
+        <!-- X cross -->
+        <rect x="69" y="47" width="22" height="7" rx="3.5" fill="white" transform="rotate(-38 80 50.5)"/>
+        <rect x="69" y="47" width="22" height="7" rx="3.5" fill="white" transform="rotate(38 80 50.5)"/>
+
+        <!-- NOSE -->
+        <ellipse cx="80" cy="115" rx="10" ry="8" fill="#f07080"/>
+        <ellipse cx="77" cy="112" rx="3" ry="2.5" fill="#f8a0b0" opacity=".6"/>
+
+        <!-- EYES (dynamic) -->
+        <ellipse id="eL" cx="64" cy="100" rx="10" ry="11" fill="#1a0800"/>
+        <ellipse id="eR" cx="96" cy="100" rx="10" ry="11" fill="#1a0800"/>
+        <ellipse id="iL" cx="64" cy="101" rx="7" ry="7.5" fill="#3a1808"/>
+        <ellipse id="iR" cx="96" cy="101" rx="7" ry="7.5" fill="#3a1808"/>
+        <ellipse id="hL" cx="61" cy="97" rx="3.5" ry="4" fill="white"/>
+        <ellipse id="hR" cx="93" cy="97" rx="3.5" ry="4" fill="white"/>
+        <ellipse id="pL" cx="60" cy="97" rx="1.5" ry="2" fill="#aaccff"/>
+        <ellipse id="pR" cx="92" cy="97" rx="1.5" ry="2" fill="#aaccff"/>
+        <line id="bwL" x1="55" y1="90" x2="74" y2="95" stroke="#1a0800" stroke-width="3.5" stroke-linecap="round" opacity="0"/>
+        <line id="bwR" x1="86" y1="95" x2="105" y2="90" stroke="#1a0800" stroke-width="3.5" stroke-linecap="round" opacity="0"/>
+        <text id="sL" x="64" y="106" font-size="15" fill="#f7c948" text-anchor="middle" opacity="0">★</text>
+        <text id="sR" x="96" y="106" font-size="15" fill="#f7c948" text-anchor="middle" opacity="0">★</text>
+        <path id="tL" d="M62 110 Q59 120 57 130" stroke="#88ccff" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
+        <path id="tR" d="M98 110 Q101 120 103 130" stroke="#88ccff" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
+        <ellipse id="tdL" cx="56" cy="132" rx="4" ry="5" fill="#88ccff" opacity="0"/>
+        <ellipse id="tdR" cx="104" cy="132" rx="4" ry="5" fill="#88ccff" opacity="0"/>
+
+        <!-- BLUSH -->
+        <ellipse id="bkL" cx="50" cy="109" rx="12" ry="7" fill="#ff7070" opacity=".35"/>
+        <ellipse id="bkR" cx="110" cy="109" rx="12" ry="7" fill="#ff7070" opacity=".35"/>
+
+        <!-- MOUTH -->
+        <path id="mSm" d="M72 123 Q80 132 88 123" stroke="#7a2a10" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path id="mFr" d="M72 129 Q80 121 88 129" stroke="#7a2a10" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
+        <ellipse id="mOp" cx="80" cy="125" rx="11" ry="7" fill="#7a2a10" opacity="0"/>
+        <ellipse id="mOpI" cx="80" cy="122" rx="8" ry="4" fill="#cc4455" opacity="0"/>
+      </svg>
+    </div>
+
+    <div class="chopper-name">CHOPPER</div>
+    <div class="chopper-role">Médico · Thousand Sunny</div>
+
+    <div class="pills">
+      <div class="pill" id="p-happy">feliz</div>
+      <div class="pill" id="p-shy">tímido</div>
+      <div class="pill" id="p-angry">enojado</div>
+      <div class="pill" id="p-excited">emocionado</div>
+      <div class="pill" id="p-sad">triste</div>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="msgs" id="msgs">
+      <div class="msg c">
+        <div class="mlabel">Chopper</div>
+        <div class="mbubble">¡Oye! ¡No te emociones solo porque te hablo, baka! ...Pero igual, bienvenido. Soy Tony Tony Chopper, médico de la Thousand Sunny. ¿En qué puedo ayudarte?</div>
+      </div>
+    </div>
+
+    <div class="qr" id="qr">
+      <button onclick="sq('¿Cuál es tu sueño?')">Tu sueño ✨</button>
+      <button onclick="sq('¡Eres muy kawaii!')">Eres kawaii 🦌</button>
+      <button onclick="sq('¿Qué es la Rumble Ball?')">Rumble Ball 💊</button>
+      <button onclick="sq('Cuéntame del Dr. Hiriluk')">Dr. Hiriluk 🌸</button>
+      <button onclick="sq('¿Cuál es tu forma favorita?')">Tus formas 💪</button>
+    </div>
+
+    <div class="inp-area">
+      <textarea id="inp" placeholder="Escríbele a Chopper..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+      <button class="sbtn" id="sb" onclick="send()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const sO=(id,v)=>{const e=$(id);if(e)e.setAttribute('opacity',v)};
+const sA=(id,a,v)=>{const e=$(id);if(e)e.setAttribute(a,v)};
+
+// ── SOUNDS ────────────────────────────────────────────────────────────────
+let actx;
+function gc(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx}
+function beep(f,d,t='sine',v=.12){
+  try{const c=gc(),o=c.createOscillator(),g=c.createGain();
+  o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;
+  g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);
+  o.start();o.stop(c.currentTime+d)}catch(e){}
+}
+const sounds={
+  happy:   ()=>{beep(660,.1);setTimeout(()=>beep(880,.12),90);setTimeout(()=>beep(1100,.15),180)},
+  shy:     ()=>{beep(440,.1);setTimeout(()=>beep(380,.15),110)},
+  angry:   ()=>{beep(180,.08,'sawtooth',.16);setTimeout(()=>beep(150,.12,'sawtooth',.13),80)},
+  excited: ()=>[660,770,880,990,1100].forEach((f,i)=>setTimeout(()=>beep(f,.1),i*55)),
+  sad:     ()=>{beep(330,.2);setTimeout(()=>beep(280,.25),190);setTimeout(()=>beep(240,.3),380)},
+  poke:    ()=>{beep(520,.07);setTimeout(()=>beep(660,.09),80)},
+  msg:     ()=>beep(650,.06,'sine',.07),
+  thinking:()=>{},
+};
+
+// ── MOODS ──────────────────────────────────────────────────────────────────
+const MOODS={
+  happy:   {bubble:'¡FELIZ! uwu',  pill:'p-happy',  bg:'#f7c948',tc:'#1a0a00',anim:'bounce'},
+  shy:     {bubble:'>//< ¡BAKA!', pill:'p-shy',    bg:'#f09090',tc:'#4a0010',anim:'pulse'},
+  angry:   {bubble:'¡BAKAAAA!',   pill:'p-angry',  bg:'#e63950',tc:'#fff',   anim:'shake'},
+  excited: {bubble:'¡WAAAA! ★',   pill:'p-excited',bg:'#40c8b8',tc:'#001a18',anim:'bounce'},
+  sad:     {bubble:'...sniff...', pill:'p-sad',    bg:'#6688cc',tc:'#fff',   anim:'pulse'},
+  thinking:{bubble:'...hmm...',   pill:null,       bg:null,     tc:null,     anim:null},
+};
+
+let curMood='happy';
+
+function applyMood(name){
+  curMood=name;
+  const m=MOODS[name]||MOODS.happy;
+
+  sO('eL','1');sO('eR','1');sO('iL','1');sO('iR','1');
+  sO('hL','1');sO('hR','1');sO('pL','1');sO('pR','1');
+  sO('bwL','0');sO('bwR','0');sO('sL','0');sO('sR','0');
+  sO('tL','0');sO('tR','0');sO('tdL','0');sO('tdR','0');
+  sO('mSm','0');sO('mFr','0');sO('mOp','0');sO('mOpI','0');
+
+  if(name==='happy')    {sA('eL','ry','11');sA('eR','ry','11');sO('mSm','1');sO('bkL','.35');sO('bkR','.35')}
+  else if(name==='shy') {sA('eL','ry','8');sA('eR','ry','8');sO('mSm','1');sO('bkL','.8');sO('bkR','.8')}
+  else if(name==='angry'){sA('eL','ry','8');sA('eR','ry','8');sO('bwL','1');sO('bwR','1');sO('hL','0');sO('hR','0');sO('pL','0');sO('pR','0');sO('mFr','1');sO('bkL','0');sO('bkR','0')}
+  else if(name==='excited'){sO('eL','0');sO('eR','0');sO('iL','0');sO('iR','0');sO('hL','0');sO('hR','0');sO('pL','0');sO('pR','0');sO('sL','1');sO('sR','1');sO('mOp','1');sO('mOpI','1');sO('bkL','.5');sO('bkR','.5')}
+  else if(name==='sad') {sA('eL','ry','10');sA('eR','ry','10');sO('tL','1');sO('tR','1');sO('tdL','1');sO('tdR','1');sO('mFr','1');sO('bkL','0');sO('bkR','0')}
+  else                  {sA('eL','ry','10');sA('eR','ry','10');sO('mSm','1');sO('bkL','.2');sO('bkR','.2')}
+
+  $('bubble').textContent=m.bubble;
+
+  document.querySelectorAll('.pill').forEach(p=>{p.style.background='';p.style.color='';p.style.borderColor='';p.style.boxShadow=''});
+  if(m.pill){const p=$(m.pill);if(p){p.style.background=m.bg;p.style.color=m.tc;p.style.borderColor=m.bg;p.style.boxShadow=`0 2px 8px ${m.bg}55`}}
+
+  const w=$('avatarWrap');
+  w.className='avatar-wrap';
+  if(m.anim){void w.offsetWidth;w.classList.add('anim-'+m.anim);setTimeout(()=>{w.className='avatar-wrap anim-idle'},850)}
+  else w.classList.add('anim-idle');
+
+  sounds[name]&&sounds[name]();
+}
+
+function poke(){
+  sounds.poke();
+  const w=$('avatarWrap');
+  w.className='avatar-wrap';void w.offsetWidth;w.classList.add('anim-bounce');
+  setTimeout(()=>{w.className='avatar-wrap anim-idle'},800);
+  const phrases=['¡Oye! ¡No me toques!','¡Baka! ¡Para ya!','...¡Eso hace cosquillas!','¡S-solo porque lo dices!','¡No soy un juguete!'];
+  $('bubble').textContent=phrases[Math.floor(Math.random()*phrases.length)];
+  setTimeout(()=>$('bubble').textContent=(MOODS[curMood]||MOODS.happy).bubble,2200);
+}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────
+let history=[],loading=false;
+
+function detectMood(t){
+  if(/baka|enojado|furioso|no me molest|monstruo/i.test(t))return'angry';
+  if(/sonroj|>\/\/<|vergüenza|no es que|halagado|me alegr/i.test(t))return'shy';
+  if(/\*salta|\*grita|increíble|waa|emocionante|lo mejor/i.test(t))return'excited';
+  if(/triste|llora|sniff|extraño|hiriluk.*muri|dolor/i.test(t))return'sad';
+  return'happy';
+}
+
+function fmt(text){
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*(.*?)\*/g,'<em class="expr">*$1*</em>');
+}
+
+function addMsg(role,text){
+  const c=$('msgs'),d=document.createElement('div');
+  d.className='msg '+(role==='chopper'?'c':'u');
+  d.innerHTML=`<div class="mlabel">${role==='chopper'?'Chopper':'Tú'}</div><div class="mbubble">${fmt(text)}</div>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+  if(role==='chopper')sounds.msg();
+}
+
+let typingEl=null;
+function setLoading(v){
+  loading=v;$('sb').disabled=v;
+  const c=$('msgs');
+  if(v){typingEl=document.createElement('div');typingEl.className='msg c';typingEl.innerHTML='<div class="mlabel">Chopper</div><div class="mbubble"><div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div></div>';c.appendChild(typingEl);c.scrollTop=c.scrollHeight}
+  else if(typingEl){typingEl.remove();typingEl=null}
+}
+
+async function send(){
+  const inp=$('inp'),text=inp.value.trim();
+  if(!text||loading)return;
+  inp.value='';inp.style.height='auto';
+  $('qr').style.display='none';
+  const newHist=[...history,{role:'user',content:text}];
+  history=newHist;
+  addMsg('user',text);
+  setLoading(true);
+  applyMood('thinking');
+  try{
+    const res=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:newHist})
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data?.error||'Error del servidor');
+    const reply=data.reply||'...';
+    history=[...newHist,{role:'assistant',content:reply}];
+    addMsg('chopper',reply);
+    const m=detectMood(reply);
+    applyMood(m);
+  }catch(e){
+    addMsg('chopper','*gruñe* ¡El Den Den Mushi falló! '+e.message);
+    applyMood('angry');
+  }
+  setLoading(false);
+}
+
+function sq(t){$('inp').value=t;send()}
+
+applyMood('happy');
+</script>
+</body>
+</html>
