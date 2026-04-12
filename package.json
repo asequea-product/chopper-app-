@@ -1,0 +1,6 @@
+{
+  "name": "chopper-chat",
+  "version": "1.0.0",
+  "description": "Tony Tony Chopper interactive chat",
+  "engines": { "node": "18.x" }
+}
