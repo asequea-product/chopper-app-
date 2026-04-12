@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -22,9 +21,19 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;heig
 .dot{width:7px;height:7px;border-radius:50%;background:#40c8a8;box-shadow:0 0 6px #40c8a8;animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 
+/* Voice toggle button */
+.voice-btn{
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  font-family:'Nunito',sans-serif;font-size:.65rem;font-weight:700;
+  padding:4px 10px;border-radius:10px;cursor:pointer;transition:all .2s;
+  letter-spacing:1px;text-transform:uppercase;
+}
+.voice-btn.on{background:#2090d822;border-color:var(--accent);color:var(--accent)}
+.voice-btn.speaking{background:#40c8a822;border-color:#40c8a8;color:#40c8a8;animation:vpulse 1s infinite}
+@keyframes vpulse{0%,100%{opacity:1}50%{opacity:.6}}
+
 .main{display:flex;flex:1;overflow:hidden}
 
-/* SIDE — full height, no padding */
 .side{
   width:45%;flex-shrink:0;
   display:flex;flex-direction:column;
@@ -34,7 +43,6 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;heig
   position:relative;
 }
 
-/* Avatar fills entire side panel */
 .avatar-wrap{
   width:100%;flex:1;
   position:relative;
@@ -45,15 +53,13 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;heig
 }
 
 #chopIMG{
-  width:100%;
-  height:100%;
+  width:100%;height:100%;
   object-fit:cover;
   object-position:center top;
   transition:opacity .25s ease;
   display:block;
 }
 
-/* Speech bubble */
 .bubble{
   position:absolute;top:16px;right:16px;
   background:#fff;color:#111;
@@ -68,7 +74,6 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;heig
   border-top:8px solid #fff;
 }
 
-/* Name + pills overlay at bottom */
 .avatar-overlay{
   position:absolute;bottom:0;left:0;right:0;
   padding:12px 10px;
@@ -81,7 +86,6 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;heig
 .pills{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
 .pill{font-size:.55rem;padding:2px 8px;border-radius:7px;font-weight:900;letter-spacing:1px;text-transform:uppercase;transition:all .3s;border:1px solid var(--border);color:var(--muted);background:#0d1c30bb;cursor:default}
 
-/* CHAT */
 .chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--chat)}
 
 .msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
@@ -97,7 +101,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;heig
 .mbubble{padding:10px 14px;border-radius:16px;font-size:.9rem;line-height:1.55}
 .msg.c .mbubble{background:var(--bbg);border:1px solid var(--border);border-bottom-left-radius:3px}
 .msg.u .mbubble{background:var(--ubg);border:1px solid #3a1830;border-bottom-right-radius:3px;color:#ffc8d8}
-em.expr{color:#f7c948;font-style:italic}
+em.expr{color:var(--text);font-style:italic;opacity:.85}
 
 .qr{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;flex-shrink:0}
 .qr button{background:#0d1c30;border:1px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:700;padding:5px 11px;border-radius:16px;cursor:pointer;white-space:nowrap;transition:all .15s}
@@ -140,6 +144,7 @@ textarea::placeholder{color:var(--muted)}
     <div class="topbar-title">⚕ CHOPPER CHAT</div>
     <div class="topbar-sub">Tony Tony Chopper · One Piece</div>
   </div>
+  <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🔇 VOZ</button>
   <div class="online"><div class="dot"></div>EN LÍNEA</div>
 </div>
 
@@ -192,6 +197,7 @@ textarea::placeholder{color:var(--muted)}
 <script>
 const $ = id => document.getElementById(id);
 
+// ── SOUNDS ────────────────────────────────────────────────────────────────
 let actx;
 function gc(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx}
 function beep(f,d,t='sine',v=.1){
@@ -215,6 +221,76 @@ const SND={
   msg:     ()=>beep(660,.06,'sine',.07),
 };
 
+// ── VOICE (Web Speech API) ─────────────────────────────────────────────────
+let voiceOn = false;
+let voices = [];
+let chopperVoice = null;
+
+function loadVoices() {
+  voices = window.speechSynthesis.getVoices();
+  // Buscar voz femenina española — tierna y aguda
+  const preferred = [
+    'Microsoft Sabina', 'Sabina', 'Google español', 'español',
+    'Monica', 'Paulina', 'es-ES', 'es-MX', 'es'
+  ];
+  for (const name of preferred) {
+    const v = voices.find(v =>
+      v.name.toLowerCase().includes(name.toLowerCase()) ||
+      v.lang.toLowerCase().includes(name.toLowerCase())
+    );
+    if (v) { chopperVoice = v; break; }
+  }
+  // Fallback: cualquier voz en español
+  if (!chopperVoice) {
+    chopperVoice = voices.find(v => v.lang.startsWith('es')) || voices[0];
+  }
+}
+
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  const btn = $('voiceBtn');
+  if (voiceOn) {
+    btn.textContent = '🔊 VOZ';
+    btn.classList.add('on');
+  } else {
+    btn.textContent = '🔇 VOZ';
+    btn.classList.remove('on');
+    window.speechSynthesis.cancel();
+  }
+}
+
+function speak(text) {
+  if (!voiceOn) return;
+  window.speechSynthesis.cancel();
+
+  // Limpiar asteriscos y acciones — solo habla el texto real
+  const clean = text
+    .replace(/\*[^*]+\*/g, '')   // quita *acciones*
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!clean) return;
+
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang = 'es-ES';
+  utt.rate = 1.15;    // un poco más rápido — energía de Chopper
+  utt.pitch = 1.6;    // agudo y tierno
+  utt.volume = 0.9;
+
+  if (chopperVoice) utt.voice = chopperVoice;
+
+  const btn = $('voiceBtn');
+  utt.onstart  = () => { btn.textContent = '🔊 VOZ'; btn.classList.add('speaking'); };
+  utt.onend    = () => { btn.textContent = '🔊 VOZ'; btn.classList.remove('speaking'); btn.classList.add('on'); };
+  utt.onerror  = () => { btn.classList.remove('speaking'); };
+
+  window.speechSynthesis.speak(utt);
+}
+
+// ── MOODS ─────────────────────────────────────────────────────────────────
 const MOODS={
   happy:   {bubble:'¡FELIZ! uwu',  img:'happy',   pill:'p-happy',   bg:'#f7c948',tc:'#1a0a00',anim:'bounce'},
   shy:     {bubble:'>//< ¡BAKA!', img:'shy',     pill:'p-shy',     bg:'#f090a0',tc:'#3a0018',anim:'pulse'},
@@ -229,13 +305,10 @@ let curMood='happy';
 function applyMood(name){
   const m=MOODS[name]||MOODS.happy;
   curMood=name;
-
   const img=$('chopIMG');
   img.style.opacity='0';
   setTimeout(()=>{img.src=`/images/${m.img}.png`;img.style.opacity='1';},200);
-
   $('bubble').textContent=m.bubble;
-
   document.querySelectorAll('.pill').forEach(p=>{
     p.style.background='';p.style.color='';p.style.borderColor='';p.style.boxShadow='';
   });
@@ -244,7 +317,6 @@ function applyMood(name){
     pill.style.background=m.bg;pill.style.color=m.tc;
     pill.style.borderColor=m.bg;pill.style.boxShadow=`0 2px 8px ${m.bg}55`;
   }
-
   const w=$('avatarWrap');
   w.className='avatar-wrap';
   if(m.anim){
@@ -264,10 +336,13 @@ function poke(){
   w.classList.add('anim-bounce');
   setTimeout(()=>{w.className='avatar-wrap anim-idle';},800);
   const phrases=['¡Oye! ¡No me toques!','¡Baka! ¡Para ya!','...¡Eso hace cosquillas!','¡No soy un juguete!','¡S-solo porque lo dices...!'];
-  $('bubble').textContent=phrases[Math.floor(Math.random()*phrases.length)];
+  const p=phrases[Math.floor(Math.random()*phrases.length)];
+  $('bubble').textContent=p;
+  speak(p);
   setTimeout(()=>$('bubble').textContent=(MOODS[curMood]||MOODS.happy).bubble,2200);
 }
 
+// ── CHAT ──────────────────────────────────────────────────────────────────
 let history=[],loading=false;
 
 const SYS=`Eres Tony Tony Chopper de One Piece. Hablas SIEMPRE en español.
@@ -300,7 +375,7 @@ function addMsg(role,text){
   d.className='msg '+(role==='chopper'?'c':'u');
   d.innerHTML=`<div class="mlabel">${role==='chopper'?'Chopper':'Tú'}</div><div class="mbubble">${fmt(text)}</div>`;
   c.appendChild(d);c.scrollTop=c.scrollHeight;
-  if(role==='chopper')SND.msg();
+  if(role==='chopper'){SND.msg();speak(text);}
 }
 
 let typingEl=null;
@@ -344,7 +419,6 @@ async function send(){
 }
 
 function sq(t){$('inp').value=t;send();}
-
 applyMood('happy');
 </script>
 </body>
