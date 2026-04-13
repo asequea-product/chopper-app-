@@ -1,425 +1,294 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chopper Chat ⚕</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+
 :root{
-  --bg:#0a0f1a;--side:#080d18;--chat:#0b1020;
-  --border:#1a2840;--bbg:#0d1c30;--ubg:#150818;
-  --text:#f0f0f0;--muted:#4a7a9a;--accent:#2090d8;
+  --bg:#0a0f1a;
+  --side:#080d18;
+  --chat:#0b1020;
+  --border:#1a2840;
+  --text:#f0f0f0;
+  --accent:#2090d8;
 }
-body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-.topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:#05080fee;border-bottom:1px solid var(--border);flex-shrink:0}
-.topbar-title{font-family:'Bangers',cursive;font-size:1.6rem;letter-spacing:4px;color:#2090d8;text-shadow:0 0 20px #2090d844}
-.topbar-sub{font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
-.online{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.65rem;color:#40c8a8}
-.dot{width:7px;height:7px;border-radius:50%;background:#40c8a8;box-shadow:0 0 6px #40c8a8;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* Voice toggle button */
-.voice-btn{
-  background:transparent;border:1px solid var(--border);color:var(--muted);
-  font-family:'Nunito',sans-serif;font-size:.65rem;font-weight:700;
-  padding:4px 10px;border-radius:10px;cursor:pointer;transition:all .2s;
-  letter-spacing:1px;text-transform:uppercase;
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Nunito',sans-serif;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
 }
-.voice-btn.on{background:#2090d822;border-color:var(--accent);color:var(--accent)}
-.voice-btn.speaking{background:#40c8a822;border-color:#40c8a8;color:#40c8a8;animation:vpulse 1s infinite}
-@keyframes vpulse{0%,100%{opacity:1}50%{opacity:.6}}
 
-.main{display:flex;flex:1;overflow:hidden}
+/* TOP */
+.topbar{
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  font-family:'Bangers';
+  color:var(--accent);
+}
+
+/* LAYOUT */
+.main{flex:1;display:flex}
 
 .side{
-  width:45%;flex-shrink:0;
-  display:flex;flex-direction:column;
+  width:45%;
   background:var(--side);
-  border-right:1px solid var(--border);
-  overflow:hidden;
   position:relative;
 }
 
 .avatar-wrap{
-  width:100%;flex:1;
+  height:100%;
   position:relative;
   cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  min-height:0;
-  overflow:hidden;
 }
 
 #chopIMG{
-  width:100%;height:100%;
+  width:100%;
+  height:100%;
   object-fit:cover;
-  object-position:center top;
-  transition:opacity .25s ease;
-  display:block;
+  transition:.3s;
 }
 
+/* bubble */
 .bubble{
-  position:absolute;top:16px;right:16px;
-  background:#fff;color:#111;
-  font-family:'Bangers',cursive;font-size:.8rem;letter-spacing:1px;
-  padding:5px 13px;border-radius:14px;white-space:nowrap;
-  box-shadow:0 2px 8px #0004;z-index:5;
-  transition:all .3s;pointer-events:none;
-}
-.bubble::after{
-  content:'';position:absolute;bottom:-7px;left:14px;
-  border-left:6px solid transparent;border-right:6px solid transparent;
-  border-top:8px solid #fff;
+  position:absolute;
+  top:15px;
+  right:15px;
+  background:#fff;
+  color:#000;
+  padding:6px 12px;
+  border-radius:14px;
+  font-family:'Bangers';
 }
 
-.avatar-overlay{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:12px 10px;
-  background:linear-gradient(transparent, #080d18dd 60%);
-  text-align:center;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
+/* animaciones */
+.anim-bounce{animation:bounce .6s}
+.anim-shake{animation:shake .5s}
+.anim-pulse{animation:pulse .6s}
+.anim-idle{animation:idle 3s infinite}
+
+@keyframes bounce{50%{transform:translateY(-15px)}}
+@keyframes shake{25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+@keyframes pulse{50%{transform:scale(1.08)}}
+@keyframes idle{50%{transform:translateY(-5px)}}
+
+/* hablando */
+.voice-active #chopIMG{animation:talk .4s infinite}
+@keyframes talk{50%{transform:translateY(-4px)}}
+
+/* chat */
+.chat{flex:1;display:flex;flex-direction:column}
+
+.msgs{flex:1;overflow:auto;padding:16px}
+
+.msg{margin-bottom:10px}
+.c{color:#8fd3ff}
+.u{text-align:right;color:#ffc8d8}
+
+.inp{
+  display:flex;
+  padding:10px;
+  border-top:1px solid var(--border);
+  position:sticky;
+  bottom:0;
+  background:#05080f;
 }
-.cname{font-family:'Bangers',cursive;font-size:1.3rem;letter-spacing:3px;color:#fff}
-.crole{font-size:.6rem;color:#8ab0d0;letter-spacing:2px;text-transform:uppercase}
-.pills{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
-.pill{font-size:.55rem;padding:2px 8px;border-radius:7px;font-weight:900;letter-spacing:1px;text-transform:uppercase;transition:all .3s;border:1px solid var(--border);color:var(--muted);background:#0d1c30bb;cursor:default}
 
-.chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--chat)}
+textarea{flex:1;font-size:16px}
+button{width:60px}
 
-.msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
-.msgs::-webkit-scrollbar{width:3px}
-.msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-
-.msg{display:flex;flex-direction:column;max-width:84%;animation:fU .25s ease}
-@keyframes fU{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.msg.c{align-self:flex-start}
-.msg.u{align-self:flex-end}
-.mlabel{font-size:.58rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:3px}
-.msg.u .mlabel{text-align:right}
-.mbubble{padding:10px 14px;border-radius:16px;font-size:.9rem;line-height:1.55}
-.msg.c .mbubble{background:var(--bbg);border:1px solid var(--border);border-bottom-left-radius:3px}
-.msg.u .mbubble{background:var(--ubg);border:1px solid #3a1830;border-bottom-right-radius:3px;color:#ffc8d8}
-em.expr{color:var(--text);font-style:italic;opacity:.85}
-
-.qr{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;flex-shrink:0}
-.qr button{background:#0d1c30;border:1px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:700;padding:5px 11px;border-radius:16px;cursor:pointer;white-space:nowrap;transition:all .15s}
-.qr button:hover{background:#1a3a55;color:#fff;border-color:var(--accent)}
-
-.inp-area{display:flex;gap:9px;padding:12px 14px;border-top:1px solid var(--border);background:#05080fee;flex-shrink:0}
-textarea{flex:1;background:#0d1c30;border:1px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;padding:10px 14px;border-radius:12px;outline:none;resize:none;min-height:42px;max-height:100px;transition:border-color .2s;line-height:1.4}
-textarea:focus{border-color:var(--accent)}
-textarea::placeholder{color:var(--muted)}
-.sbtn{background:var(--accent);border:none;color:#fff;width:42px;height:42px;border-radius:12px;font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px #2090d844;transition:all .15s}
-.sbtn:hover{transform:scale(1.07)}
-.sbtn:active{transform:scale(.95)}
-.sbtn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
-
-.dots{display:flex;gap:4px;align-items:center;padding:10px 14px}
-.dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block}
-.d1{animation:db 1.2s infinite}.d2{animation:db 1.2s .2s infinite}.d3{animation:db 1.2s .4s infinite}
-@keyframes db{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}
-
-@keyframes bounce{0%,100%{transform:translateY(0)}35%{transform:translateY(-18px)}65%{transform:translateY(-7px)}}
-@keyframes shake{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-7deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-@keyframes idle{0%,100%{transform:translateY(0px)}50%{transform:translateY(-6px)}}
-.anim-bounce #chopIMG{animation:bounce .7s ease}
-.anim-shake  #chopIMG{animation:shake .5s ease}
-.anim-pulse  #chopIMG{animation:pulse .6s ease}
-.anim-idle   #chopIMG{animation:idle 3s ease-in-out infinite}
-
-@media(max-width:600px){
-  .side{width:40%}
-  .cname{font-size:1rem}
-  .crole,.pills{display:none}
+/* mobile */
+@media(max-width:768px){
+  .main{flex-direction:column}
+  .side{width:100%;height:260px}
+  .chat{height:calc(100dvh - 260px)}
 }
 </style>
 </head>
+
 <body>
 
-<div class="topbar">
-  <div>
-    <div class="topbar-title">⚕ CHOPPER CHAT</div>
-    <div class="topbar-sub">Tony Tony Chopper · One Piece</div>
-  </div>
-  <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🔇 VOZ</button>
-  <div class="online"><div class="dot"></div>EN LÍNEA</div>
-</div>
+<div class="topbar">⚕ CHOPPER CHAT</div>
 
 <div class="main">
 
-  <div class="side">
-    <div class="avatar-wrap" id="avatarWrap" onclick="poke()">
-      <div class="bubble" id="bubble">¡FELIZ! uwu</div>
-      <img id="chopIMG" src="/images/happy.png" alt="Chopper"/>
-      <div class="avatar-overlay">
-        <div class="cname">CHOPPER</div>
-        <div class="crole">Médico · Thousand Sunny</div>
-        <div class="pills">
-          <div class="pill" id="p-happy">feliz</div>
-          <div class="pill" id="p-shy">tímido</div>
-          <div class="pill" id="p-angry">enojado</div>
-          <div class="pill" id="p-excited">emocionado</div>
-          <div class="pill" id="p-sad">triste</div>
-          <div class="pill" id="p-thinking">pensando</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="chat">
-    <div class="msgs" id="msgs">
-      <div class="msg c">
-        <div class="mlabel">Chopper</div>
-        <div class="mbubble">¡Oye! ¡No te emociones solo porque te hablo, baka! ...Pero igual, bienvenido. Soy Tony Tony Chopper, médico de la Thousand Sunny. ¿En qué puedo ayudarte?</div>
-      </div>
-    </div>
-
-    <div class="qr" id="qr">
-      <button onclick="sq('¿Cuál es tu sueño?')">Tu sueño ✨</button>
-      <button onclick="sq('¡Eres muy kawaii!')">Eres kawaii 🦌</button>
-      <button onclick="sq('¿Qué es la Rumble Ball?')">Rumble Ball 💊</button>
-      <button onclick="sq('Cuéntame del Dr. Hiriluk')">Dr. Hiriluk 🌸</button>
-      <button onclick="sq('¿Cuál es tu forma favorita?')">Tus formas 💪</button>
-    </div>
-
-    <div class="inp-area">
-      <textarea id="inp" placeholder="Escríbele a Chopper..." rows="1"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"
-        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-      <button class="sbtn" id="sb" onclick="send()">➤</button>
-    </div>
+<div class="side">
+  <div class="avatar-wrap" id="avatarWrap" onclick="poke()">
+    <div class="bubble" id="bubble">¡HEY!</div>
+    <img id="chopIMG" src="/images/feliz.png">
   </div>
 </div>
 
+<div class="chat">
+  <div class="msgs" id="msgs"></div>
+
+  <div class="inp">
+    <textarea id="inp"></textarea>
+    <button onclick="send()">➤</button>
+  </div>
+</div>
+
+</div>
+
 <script>
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
 
-// ── SOUNDS ────────────────────────────────────────────────────────────────
-let actx;
-function gc(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx}
-function beep(f,d,t='sine',v=.1){
-  try{
-    const c=gc(),o=c.createOscillator(),g=c.createGain();
-    o.connect(g);g.connect(c.destination);
-    o.type=t;o.frequency.value=f;
-    g.gain.setValueAtTime(v,c.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);
-    o.start();o.stop(c.currentTime+d);
-  }catch(e){}
-}
-const SND={
-  happy:   ()=>{beep(660,.1);setTimeout(()=>beep(880,.12),90);setTimeout(()=>beep(1100,.15),180)},
-  shy:     ()=>{beep(440,.1);setTimeout(()=>beep(360,.18),120)},
-  angry:   ()=>{beep(180,.09,'sawtooth',.15);setTimeout(()=>beep(150,.14,'sawtooth',.12),80)},
-  excited: ()=>[660,770,880,990,1100].forEach((f,i)=>setTimeout(()=>beep(f,.1),i*55)),
-  sad:     ()=>{beep(320,.22);setTimeout(()=>beep(270,.28),200);setTimeout(()=>beep(230,.32),400)},
-  thinking:()=>{beep(480,.08);setTimeout(()=>beep(520,.08),150)},
-  poke:    ()=>{beep(520,.07);setTimeout(()=>beep(680,.09),80)},
-  msg:     ()=>beep(660,.06,'sine',.07),
+// ── MEMORY ─────────────────────────
+let memory = {
+  kindness: 0,
+  aggression: 0,
+  interaction: 0
 };
 
-// ── VOICE (Web Speech API) ─────────────────────────────────────────────────
-let voiceOn = false;
-let voices = [];
-let chopperVoice = null;
+try{
+  const saved = localStorage.getItem('chopper_memory');
+  if(saved) memory = JSON.parse(saved);
+}catch(e){}
 
-function loadVoices() {
-  voices = window.speechSynthesis.getVoices();
-  // Buscar voz femenina española — tierna y aguda
-  const preferred = [
-    'Microsoft Sabina', 'Sabina', 'Google español', 'español',
-    'Monica', 'Paulina', 'es-ES', 'es-MX', 'es'
-  ];
-  for (const name of preferred) {
-    const v = voices.find(v =>
-      v.name.toLowerCase().includes(name.toLowerCase()) ||
-      v.lang.toLowerCase().includes(name.toLowerCase())
-    );
-    if (v) { chopperVoice = v; break; }
-  }
-  // Fallback: cualquier voz en español
-  if (!chopperVoice) {
-    chopperVoice = voices.find(v => v.lang.startsWith('es')) || voices[0];
-  }
-}
-
-window.speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-function toggleVoice() {
-  voiceOn = !voiceOn;
-  const btn = $('voiceBtn');
-  if (voiceOn) {
-    btn.textContent = '🔊 VOZ';
-    btn.classList.add('on');
-  } else {
-    btn.textContent = '🔇 VOZ';
-    btn.classList.remove('on');
-    window.speechSynthesis.cancel();
-  }
-}
-
-function speak(text) {
-  if (!voiceOn) return;
-  window.speechSynthesis.cancel();
-
-  // Limpiar asteriscos y acciones — solo habla el texto real
-  const clean = text
-    .replace(/\*[^*]+\*/g, '')   // quita *acciones*
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!clean) return;
-
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang = 'es-ES';
-  utt.rate = 1.15;    // un poco más rápido — energía de Chopper
-  utt.pitch = 1.6;    // agudo y tierno
-  utt.volume = 0.9;
-
-  if (chopperVoice) utt.voice = chopperVoice;
-
-  const btn = $('voiceBtn');
-  utt.onstart  = () => { btn.textContent = '🔊 VOZ'; btn.classList.add('speaking'); };
-  utt.onend    = () => { btn.textContent = '🔊 VOZ'; btn.classList.remove('speaking'); btn.classList.add('on'); };
-  utt.onerror  = () => { btn.classList.remove('speaking'); };
-
-  window.speechSynthesis.speak(utt);
-}
-
-// ── MOODS ─────────────────────────────────────────────────────────────────
-const MOODS={
-  happy:   {bubble:'¡FELIZ! uwu',  img:'happy',   pill:'p-happy',   bg:'#f7c948',tc:'#1a0a00',anim:'bounce'},
-  shy:     {bubble:'>//< ¡BAKA!', img:'shy',     pill:'p-shy',     bg:'#f090a0',tc:'#3a0018',anim:'pulse'},
-  angry:   {bubble:'¡BAKAAAA!',   img:'angry',   pill:'p-angry',   bg:'#e63950',tc:'#fff',   anim:'shake'},
-  excited: {bubble:'¡WAAAA! ★',   img:'excited', pill:'p-excited', bg:'#40c8b8',tc:'#001a18',anim:'bounce'},
-  sad:     {bubble:'...sniff...', img:'sad',     pill:'p-sad',     bg:'#6688cc',tc:'#fff',   anim:'pulse'},
-  thinking:{bubble:'...hmm...',   img:'thinking',pill:'p-thinking',bg:'#8870aa',tc:'#fff',   anim:null},
+// ── IMÁGENES ───────────────────────
+const MOOD_VARIANTS={
+  happy:['feliz','dancing','emocionado'],
+  shy:['timido','pillin'],
+  angry:['enojado','determinado'],
+  sad:['triste'],
+  thinking:['pensando','timido'],
+  excited:['emocionado','dancing']
 };
 
-let curMood='happy';
+function applyMood(mood){
+  const v=MOOD_VARIANTS[mood]||['feliz'];
+  const img=v[Math.floor(Math.random()*v.length)];
+  $('chopIMG').src=`/images/${img}.png`;
 
-function applyMood(name){
-  const m=MOODS[name]||MOODS.happy;
-  curMood=name;
-  const img=$('chopIMG');
-  img.style.opacity='0';
-  setTimeout(()=>{img.src=`/images/${m.img}.png`;img.style.opacity='1';},200);
-  $('bubble').textContent=m.bubble;
-  document.querySelectorAll('.pill').forEach(p=>{
-    p.style.background='';p.style.color='';p.style.borderColor='';p.style.boxShadow='';
-  });
-  const pill=$(m.pill);
-  if(pill){
-    pill.style.background=m.bg;pill.style.color=m.tc;
-    pill.style.borderColor=m.bg;pill.style.boxShadow=`0 2px 8px ${m.bg}55`;
-  }
   const w=$('avatarWrap');
-  w.className='avatar-wrap';
-  if(m.anim){
-    void w.offsetWidth;
-    w.classList.add('anim-'+m.anim);
-    setTimeout(()=>{w.className='avatar-wrap anim-idle';},850);
-  } else {
-    w.classList.add('anim-idle');
-  }
-  SND[name]&&SND[name]();
+  w.className='avatar-wrap anim-idle';
+
+  if(mood==='angry') w.classList.add('anim-shake');
+  if(mood==='shy') w.classList.add('anim-pulse');
+  if(mood==='happy') w.classList.add('anim-bounce');
 }
 
-function poke(){
-  SND.poke();
-  const w=$('avatarWrap');
-  w.className='avatar-wrap';void w.offsetWidth;
-  w.classList.add('anim-bounce');
-  setTimeout(()=>{w.className='avatar-wrap anim-idle';},800);
-  const phrases=['¡Oye! ¡No me toques!','¡Baka! ¡Para ya!','...¡Eso hace cosquillas!','¡No soy un juguete!','¡S-solo porque lo dices...!'];
-  const p=phrases[Math.floor(Math.random()*phrases.length)];
-  $('bubble').textContent=p;
-  speak(p);
-  setTimeout(()=>$('bubble').textContent=(MOODS[curMood]||MOODS.happy).bubble,2200);
+// ── VOICE ─────────────────────────
+function speak(text){
+  const clean=text.replace(/\*[^*]+\*/g,'');
+
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='es-ES';
+  u.rate=0.85;
+  u.pitch=1.9;
+
+  document.body.classList.add('voice-active');
+
+  u.onend=async ()=>{
+    document.body.classList.remove('voice-active');
+    await new Promise(r=>setTimeout(r,500));
+
+    if(/calla|baka|idiota/i.test(clean)){
+      new Audio('/sounds/steps.mp3').play();
+    }
+  };
+
+  speechSynthesis.speak(u);
 }
 
-// ── CHAT ──────────────────────────────────────────────────────────────────
-let history=[],loading=false;
+// ── MEMORY UPDATE ─────────────────
+function updateMemory(text){
+  if(/gracias|bonito|kawaii|te quiero|genial/i.test(text)){
+    memory.kindness++;
+  }
+  if(/calla|idiota|rapido|tonto/i.test(text)){
+    memory.aggression++;
+  }
+  memory.interaction++;
+  localStorage.setItem('chopper_memory', JSON.stringify(memory));
+}
 
-const SYS=`Eres Tony Tony Chopper de One Piece. Hablas SIEMPRE en español.
-Personalidad: inocente, tierno, muy orgulloso de la medicina, valiente con sus amigos.
-Cuando te halagan dices "¡Baka! ¡No me halagues así!" pero en secreto te encanta muchísimo.
-Tu sueño es curar cualquier enfermedad del mundo y ser el mejor médico.
-Admiras profundamente al Dr. Hiriluk. La Doctorina Kureha te entrenó (era muy estricta pero la quieres).
-Comiste la Hito Hito no Mi (Fruta Humano-Humano). Usas Rumble Ball para transformarte: Brain Point, Horn Point, Heavy Point, Guard Point, Arm Point, Jumping Point, Monster Point.
-Eres el médico del Thousand Sunny. Tus nakama: Luffy, Zoro, Nami, Usopp, Sanji, Robin, Franky y Brook.
-Usa expresiones físicas entre asteriscos: *se sonroja*, *salta emocionado*, *gruñe*, *llora*, *se enorgullece*, *da vueltas nervioso*, *esconde la cara*.
-Responde siempre en personaje. Máximo 3-4 oraciones cortas y muy expresivas. No rompas el personaje nunca.
-Si preguntan algo fuera del universo One Piece, respóndelo desde la perspectiva ingenua de Chopper.`;
+// ── PERSONALIDAD ──────────────────
+function personality(text){
 
+  if(memory.aggression >= 3){
+    return "¡BAKA! ¡No me hables así!";
+  }
+
+  if(memory.kindness >= 3 && /kawaii|bonito/i.test(text)){
+    return "…oye… no digas eso tan directo.";
+  }
+
+  if(/kawaii|bonito/i.test(text)){
+    return "¡C-CALLA! ¡No digas eso tan directo!";
+  }
+
+  if(/hola/i.test(text)){
+    return "¡Oye!... hola.";
+  }
+
+  return null;
+}
+
+// ── MOOD ─────────────────────────
 function detectMood(t){
-  if(/baka|enojado|furioso|no me molest|monstruo/i.test(t))return'angry';
-  if(/sonroj|>\/\/<|vergüenza|no es que|halagado|me alegr/i.test(t))return'shy';
-  if(/\*salta|\*grita|increíble|waa|emocionante|lo mejor/i.test(t))return'excited';
-  if(/triste|llora|sniff|extraño|hiriluk.*muri|dolor/i.test(t))return'sad';
-  return'happy';
+  if(/calla|baka|idiota/i.test(t)) return 'angry';
+  if(/n-no/i.test(t)) return 'shy';
+  if(/emocion/i.test(t)) return 'excited';
+  if(/triste/i.test(t)) return 'sad';
+  return 'happy';
 }
 
-function fmt(text){
-  return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*(.*?)\*/g,'<em class="expr">*$1*</em>');
-}
+// ── CHAT ─────────────────────────
+function add(role,text){
+  const d=document.createElement('div');
+  d.className='msg '+(role==='c'?'c':'u');
+  d.innerText=text;
+  $('msgs').appendChild(d);
+  $('msgs').scrollTop=99999;
 
-function addMsg(role,text){
-  const c=$('msgs'),d=document.createElement('div');
-  d.className='msg '+(role==='chopper'?'c':'u');
-  d.innerHTML=`<div class="mlabel">${role==='chopper'?'Chopper':'Tú'}</div><div class="mbubble">${fmt(text)}</div>`;
-  c.appendChild(d);c.scrollTop=c.scrollHeight;
-  if(role==='chopper'){SND.msg();speak(text);}
-}
-
-let typingEl=null;
-function setLoading(v){
-  loading=v;$('sb').disabled=v;
-  const c=$('msgs');
-  if(v){
-    typingEl=document.createElement('div');typingEl.className='msg c';
-    typingEl.innerHTML='<div class="mlabel">Chopper</div><div class="mbubble"><div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div></div>';
-    c.appendChild(typingEl);c.scrollTop=c.scrollHeight;
-  } else if(typingEl){typingEl.remove();typingEl=null;}
-}
-
-async function send(){
-  const inp=$('inp'),text=inp.value.trim();
-  if(!text||loading)return;
-  inp.value='';inp.style.height='auto';
-  $('qr').style.display='none';
-  const newHist=[...history,{role:'user',content:text}];
-  history=newHist;
-  addMsg('user',text);
-  setLoading(true);
-  applyMood('thinking');
-  try{
-    const res=await fetch('/api/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:newHist}),
-    });
-    const data=await res.json();
-    if(!res.ok)throw new Error(data?.error||'Error del servidor');
-    const reply=data.reply||'...';
-    history=[...newHist,{role:'assistant',content:reply}];
-    addMsg('chopper',reply);
-    applyMood(detectMood(reply));
-  }catch(e){
-    addMsg('chopper',`*gruñe furioso* ¡El Den Den Mushi falló! ${e.message}`);
-    applyMood('angry');
+  if(role==='c'){
+    speak(text);
+    applyMood(detectMood(text));
+    showBubble(text);
   }
-  setLoading(false);
 }
 
-function sq(t){$('inp').value=t;send();}
-applyMood('happy');
+function showBubble(t){
+  $('bubble').innerText=t.slice(0,15);
+}
+
+// poke
+function poke(){
+  const phrases=["¡No me toques!","¡Baka!","¡Para!","...oye"];
+  const p=phrases[Math.floor(Math.random()*phrases.length)];
+  showBubble(p);
+  speak(p);
+}
+
+// ── SEND ─────────────────────────
+function send(){
+  const t=$('inp').value.trim();
+  if(!t) return;
+
+  $('inp').value='';
+  updateMemory(t);
+  add('u',t);
+
+  const forced=personality(t);
+
+  if(forced){
+    add('c',forced);
+    return;
+  }
+
+  add('c',"¡Soy Chopper!");
+}
 </script>
+
 </body>
 </html>
