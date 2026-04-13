@@ -3,290 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chopper Chat ⚕</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<title>Chopper Chat</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg:#0a0f1a;
-  --side:#080d18;
-  --chat:#0b1020;
-  --border:#1a2840;
-  --text:#f0f0f0;
-  --accent:#2090d8;
-}
-
 body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Nunito',sans-serif;
-  min-height:100dvh;
+  margin:0;
   display:flex;
-  flex-direction:column;
+  height:100vh;
+  font-family:sans-serif;
+  background:#0b1020;
+  color:white;
 }
 
-/* TOP */
-.topbar{
-  padding:10px 16px;
-  border-bottom:1px solid var(--border);
-  font-family:'Bangers';
-  color:var(--accent);
-}
+.main{display:flex;flex:1}
 
-/* LAYOUT */
-.main{flex:1;display:flex}
-
+/* avatar */
 .side{
-  width:45%;
-  background:var(--side);
-  position:relative;
-}
-
-.avatar-wrap{
-  height:100%;
-  position:relative;
-  cursor:pointer;
+  width:40%;
+  background:#000;
 }
 
 #chopIMG{
   width:100%;
   height:100%;
   object-fit:cover;
-  transition:.3s;
 }
-
-/* bubble */
-.bubble{
-  position:absolute;
-  top:15px;
-  right:15px;
-  background:#fff;
-  color:#000;
-  padding:6px 12px;
-  border-radius:14px;
-  font-family:'Bangers';
-}
-
-/* animaciones */
-.anim-bounce{animation:bounce .6s}
-.anim-shake{animation:shake .5s}
-.anim-pulse{animation:pulse .6s}
-.anim-idle{animation:idle 3s infinite}
-
-@keyframes bounce{50%{transform:translateY(-15px)}}
-@keyframes shake{25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
-@keyframes pulse{50%{transform:scale(1.08)}}
-@keyframes idle{50%{transform:translateY(-5px)}}
-
-/* hablando */
-.voice-active #chopIMG{animation:talk .4s infinite}
-@keyframes talk{50%{transform:translateY(-4px)}}
 
 /* chat */
-.chat{flex:1;display:flex;flex-direction:column}
-
-.msgs{flex:1;overflow:auto;padding:16px}
-
-.msg{margin-bottom:10px}
-.c{color:#8fd3ff}
-.u{text-align:right;color:#ffc8d8}
-
-.inp{
+.chat{
+  flex:1;
   display:flex;
-  padding:10px;
-  border-top:1px solid var(--border);
-  position:sticky;
-  bottom:0;
-  background:#05080f;
+  flex-direction:column;
 }
 
-textarea{flex:1;font-size:16px}
+.msgs{
+  flex:1;
+  padding:20px;
+  overflow:auto;
+}
+
+.msg{margin-bottom:12px}
+
+.user{text-align:right;color:#ffb6c1}
+.bot{color:#8fd3ff}
+
+.input{
+  display:flex;
+  border-top:1px solid #333;
+}
+
+textarea{flex:1;padding:10px}
 button{width:60px}
-
-/* mobile */
-@media(max-width:768px){
-  .main{flex-direction:column}
-  .side{width:100%;height:260px}
-  .chat{height:calc(100dvh - 260px)}
-}
 </style>
 </head>
 
 <body>
 
-<div class="topbar">⚕ CHOPPER CHAT</div>
-
 <div class="main">
 
 <div class="side">
-  <div class="avatar-wrap" id="avatarWrap" onclick="poke()">
-    <div class="bubble" id="bubble">¡HEY!</div>
-    <img id="chopIMG" src="/images/feliz.png">
-  </div>
+  <img id="chopIMG" src="/images/feliz.png">
 </div>
 
 <div class="chat">
-  <div class="msgs" id="msgs"></div>
 
-  <div class="inp">
-    <textarea id="inp"></textarea>
-    <button onclick="send()">➤</button>
-  </div>
+<div class="msgs" id="msgs"></div>
+
+<div class="input">
+<textarea id="inp"></textarea>
+<button onclick="send()">➤</button>
+</div>
+
 </div>
 
 </div>
 
 <script>
-const $=id=>document.getElementById(id);
+const msgs = document.getElementById("msgs");
 
-// ── MEMORY ─────────────────────────
-let memory = {
-  kindness: 0,
-  aggression: 0,
-  interaction: 0
-};
-
-try{
-  const saved = localStorage.getItem('chopper_memory');
-  if(saved) memory = JSON.parse(saved);
-}catch(e){}
-
-// ── IMÁGENES ───────────────────────
-const MOOD_VARIANTS={
-  happy:['feliz','dancing','emocionado'],
-  shy:['timido','pillin'],
-  angry:['enojado','determinado'],
-  sad:['triste'],
-  thinking:['pensando','timido'],
-  excited:['emocionado','dancing']
-};
-
-function applyMood(mood){
-  const v=MOOD_VARIANTS[mood]||['feliz'];
-  const img=v[Math.floor(Math.random()*v.length)];
-  $('chopIMG').src=`/images/${img}.png`;
-
-  const w=$('avatarWrap');
-  w.className='avatar-wrap anim-idle';
-
-  if(mood==='angry') w.classList.add('anim-shake');
-  if(mood==='shy') w.classList.add('anim-pulse');
-  if(mood==='happy') w.classList.add('anim-bounce');
+function addMsg(text, cls){
+  const d = document.createElement("div");
+  d.className = "msg " + cls;
+  d.innerText = text;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
-// ── VOICE ─────────────────────────
+// avatar dinámico
+function setMood(){
+  const imgs = ["feliz","timido","enojado","emocionado"];
+  const r = imgs[Math.floor(Math.random()*imgs.length)];
+  document.getElementById("chopIMG").src = "/images/" + r + ".png";
+}
+
+// voz mejorada simple
 function speak(text){
-  const clean=text.replace(/\*[^*]+\*/g,'');
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang="es-ES";
+  u.rate=0.8;
+  u.pitch=1.8;
 
-  const u=new SpeechSynthesisUtterance(clean);
-  u.lang='es-ES';
-  u.rate=0.85;
-  u.pitch=1.9;
-
-  document.body.classList.add('voice-active');
-
-  u.onend=async ()=>{
-    document.body.classList.remove('voice-active');
-    await new Promise(r=>setTimeout(r,500));
-
-    if(/calla|baka|idiota/i.test(clean)){
-      new Audio('/sounds/steps.mp3').play();
-    }
+  u.onend = ()=>{
+    setTimeout(()=>{
+      const audio = new Audio('/sounds/steps.mp3');
+      audio.play();
+    },400);
   };
 
   speechSynthesis.speak(u);
 }
 
-// ── MEMORY UPDATE ─────────────────
-function updateMemory(text){
-  if(/gracias|bonito|kawaii|te quiero|genial/i.test(text)){
-    memory.kindness++;
+// personalidad básica
+function reply(text){
+  if(text.includes("kawaii")){
+    return "¡C-CALLA!";
   }
-  if(/calla|idiota|rapido|tonto/i.test(text)){
-    memory.aggression++;
-  }
-  memory.interaction++;
-  localStorage.setItem('chopper_memory', JSON.stringify(memory));
+  return "¡Soy Chopper!";
 }
 
-// ── PERSONALIDAD ──────────────────
-function personality(text){
-
-  if(memory.aggression >= 3){
-    return "¡BAKA! ¡No me hables así!";
-  }
-
-  if(memory.kindness >= 3 && /kawaii|bonito/i.test(text)){
-    return "…oye… no digas eso tan directo.";
-  }
-
-  if(/kawaii|bonito/i.test(text)){
-    return "¡C-CALLA! ¡No digas eso tan directo!";
-  }
-
-  if(/hola/i.test(text)){
-    return "¡Oye!... hola.";
-  }
-
-  return null;
-}
-
-// ── MOOD ─────────────────────────
-function detectMood(t){
-  if(/calla|baka|idiota/i.test(t)) return 'angry';
-  if(/n-no/i.test(t)) return 'shy';
-  if(/emocion/i.test(t)) return 'excited';
-  if(/triste/i.test(t)) return 'sad';
-  return 'happy';
-}
-
-// ── CHAT ─────────────────────────
-function add(role,text){
-  const d=document.createElement('div');
-  d.className='msg '+(role==='c'?'c':'u');
-  d.innerText=text;
-  $('msgs').appendChild(d);
-  $('msgs').scrollTop=99999;
-
-  if(role==='c'){
-    speak(text);
-    applyMood(detectMood(text));
-    showBubble(text);
-  }
-}
-
-function showBubble(t){
-  $('bubble').innerText=t.slice(0,15);
-}
-
-// poke
-function poke(){
-  const phrases=["¡No me toques!","¡Baka!","¡Para!","...oye"];
-  const p=phrases[Math.floor(Math.random()*phrases.length)];
-  showBubble(p);
-  speak(p);
-}
-
-// ── SEND ─────────────────────────
 function send(){
-  const t=$('inp').value.trim();
-  if(!t) return;
+  const input = document.getElementById("inp");
+  const text = input.value.trim();
+  if(!text) return;
 
-  $('inp').value='';
-  updateMemory(t);
-  add('u',t);
+  input.value="";
+  addMsg(text,"user");
 
-  const forced=personality(t);
+  const r = reply(text);
 
-  if(forced){
-    add('c',forced);
-    return;
-  }
-
-  add('c',"¡Soy Chopper!");
+  setTimeout(()=>{
+    addMsg(r,"bot");
+    speak(r);
+    setMood();
+  },400);
 }
 </script>
 
