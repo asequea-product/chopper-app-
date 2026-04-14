@@ -83,7 +83,7 @@ body{
   width:100%;height:100%;
   object-fit:cover;
   object-position:center top;
-  transition:opacity .25s ease, transform .2s ease, filter .2s ease;
+  transition:opacity .2s ease, transform .2s ease, filter .2s ease;
   display:block;
 }
 
@@ -245,8 +245,8 @@ textarea::placeholder{color:var(--muted)}
 </head>
 <body>
 
-<audio id="stepsFastAudio" src="/sounds/steps fast.m4a" preload="auto"></audio>
-<audio id="stepsSlowAudio" src="/sounds/steps slow.m4a" preload="auto"></audio>
+<audio id="stepsFastAudio" src="/sounds/steps-fast.m4a" preload="auto"></audio>
+<audio id="stepsSlowAudio" src="/sounds/steps-slow.m4a" preload="auto"></audio>
 
 <div class="topbar">
   <div>
@@ -261,7 +261,7 @@ textarea::placeholder{color:var(--muted)}
   <div class="side">
     <div class="avatar-wrap anim-idle" id="avatarWrap" onclick="poke()">
       <div class="bubble" id="bubble">¡HEY!</div>
-      <img id="chopIMG" src="/images/feliz.png" alt="Chopper"/>
+      <img id="chopIMG" src="/images/pillin.png" alt="Chopper"/>
       <div class="avatar-overlay">
         <div class="cname">CHOPPER</div>
         <div class="crole">Médico · Thousand Sunny</div>
@@ -281,13 +281,13 @@ textarea::placeholder{color:var(--muted)}
     <div class="msgs" id="msgs">
       <div class="msg c">
         <div class="mlabel">Chopper</div>
-        <div class="mbubble">¡Oye! ¡No te emociones solo porque te hablo, baka! Pero igual, bienvenido. Soy Tony Tony Chopper, médico de la Thousand Sunny. ¿En qué puedo ayudarte?</div>
+        <div class="mbubble">¡Oye! No te emociones solo porque te hablo. Pero igual, bienvenido. Soy Tony Tony Chopper, médico de la Thousand Sunny. ¿En qué puedo ayudarte?</div>
       </div>
     </div>
 
     <div class="qr" id="qr">
       <button onclick="sq('¿Cuál es tu sueño?')">Tu sueño ✨</button>
-      <button onclick="sq('¡Eres muy kawaii!')">Eres kawaii 🦌</button>
+      <button onclick="sq('¡Eres muy guapo!')">Eres guapo 🦌</button>
       <button onclick="sq('¿Qué es la Rumble Ball?')">Rumble Ball 💊</button>
       <button onclick="sq('Cuéntame del Dr. Hiriluk')">Dr. Hiriluk 🌸</button>
       <button onclick="sq('¿Cuál es tu forma favorita?')">Tus formas 💪</button>
@@ -318,37 +318,37 @@ const stepsSlowAudio = $('stepsSlowAudio');
 const MOODS = {
   happy: {
     bubble:'¡FELIZ! uwu',
-    variants:['feliz','dancing','emocionado'],
+    variants:['feliz','timido','pillin'],
     pill:'p-happy',
     bg:'#f7c948', tc:'#1a0a00', anim:'bounce'
   },
   shy: {
-    bubble:'¡C-CALLA! >//<',
-    variants:['timido','pillin'],
+    bubble:'¡CALLA! >//<',
+    variants:['timido','pillin','feliz'],
     pill:'p-shy',
     bg:'#f090a0', tc:'#3a0018', anim:'pulse'
   },
   angry: {
-    bubble:'¡BAKA!',
-    variants:['enojado','determinado'],
+    bubble:'¡CALLA!',
+    variants:['enojado','triste','pillin'],
     pill:'p-angry',
     bg:'#e63950', tc:'#fff', anim:'shake'
   },
   excited: {
     bubble:'¡WAAAA! ★',
-    variants:['emocionado','dancing'],
+    variants:['feliz','timido','pillin'],
     pill:'p-excited',
     bg:'#40c8b8', tc:'#001a18', anim:'bounce'
   },
   sad: {
     bubble:'...sniff...',
-    variants:['triste'],
+    variants:['triste','pillin'],
     pill:'p-sad',
     bg:'#6688cc', tc:'#fff', anim:'pulse'
   },
   thinking: {
     bubble:'...hmm...',
-    variants:['pensando','timido','pillin'],
+    variants:['timido','feliz','pillin'],
     pill:'p-thinking',
     bg:'#8870aa', tc:'#fff', anim:null
   }
@@ -358,16 +358,12 @@ let curMood = 'happy';
 
 const SYS = `Eres Tony Tony Chopper de One Piece. Hablas SIEMPRE en español.
 Tu personalidad mezcla ternura, orgullo, impulsividad y sensibilidad.
-Cuando te halagan reaccionas con frases como: "¡C-CALLA!", "¡BAKA!", "¡No digas eso tan directo!".
-Te enfadas rápido, pero se nota que en el fondo eres muy noble.
+Cuando te halagan reaccionas con frases como: "¡CALLA!", "¡No digas eso tan directo!".
+No uses la palabra "baka".
 Hablas con frases cortas, expresivas y naturales.
-No uses descripciones entre asteriscos. No narras acciones. Expresas todo solo con palabras.
+No uses descripciones entre asteriscos.
 Mantente siempre en personaje.
-Máximo 3-4 oraciones cortas.
-Tu sueño es curar cualquier enfermedad del mundo.
-Admiras profundamente al Dr. Hiriluk y respetas mucho a la Doctora Kureha.
-Eres el médico del Thousand Sunny.
-Si te preguntan algo fuera del universo One Piece, responde desde la mirada ingenua y sincera de Chopper.`;
+Máximo 3-4 oraciones cortas.`;
 
 function loadVoices() {
   voices = window.speechSynthesis.getVoices();
@@ -386,14 +382,12 @@ function loadVoices() {
   }
   if (!chopperVoice && voices.length) chopperVoice = voices[0];
 }
-
 window.speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
 function toggleVoice() {
   voiceOn = !voiceOn;
   const btn = $('voiceBtn');
-
   if (!voiceOn) {
     btn.textContent = '🔇 VOZ';
     btn.classList.remove('on', 'speaking');
@@ -401,7 +395,6 @@ function toggleVoice() {
     document.body.classList.remove('voice-active');
     return;
   }
-
   btn.textContent = '🔊 VOZ';
   btn.classList.add('on');
 }
@@ -418,21 +411,17 @@ function stopStepsAudio() {
 function playSteps(type = 'fast') {
   try {
     stopStepsAudio();
-
     const audio = type === 'slow' ? stepsSlowAudio : stepsFastAudio;
-    audio.volume = 0.65;
+    audio.volume = 0.7;
     audio.currentTime = 0;
     audio.play().catch(() => {});
-
-    const cutMs = type === 'slow' ? 420 : 260;
-
+    const cutMs = type === 'slow' ? 380 : 220;
     setTimeout(() => {
       try {
         audio.pause();
         audio.currentTime = 0;
       } catch (e) {}
     }, cutMs);
-
   } catch (e) {}
 }
 
@@ -440,15 +429,12 @@ function getStepsConfig(text, mood) {
   const t = (text || '').toLowerCase();
 
   const shouldUse =
-    /calla|baka|idiota|tsk|no digas eso|sniff|hmm|espera|oye|no me hables así|vergüenza|decepción|decepcion/.test(t)
+    /calla|no digas eso|sniff|hmm|oye|vergüenza|decepción|decepcion|tsk/.test(t)
     || ['angry', 'sad', 'shy'].includes(mood);
 
   if (!shouldUse) return { shouldPlay: false, type: 'fast' };
 
-  if (
-    ['angry', 'sad', 'shy'].includes(mood) ||
-    /decepción|decepcion|vergüenza|sniff|tsk|no me hables así/.test(t)
-  ) {
+  if (['angry', 'sad', 'shy'].includes(mood) || /vergüenza|sniff|decepción|decepcion|tsk/.test(t)) {
     return { shouldPlay: true, type: 'slow' };
   }
 
@@ -467,23 +453,13 @@ function speak(text, { withSteps = true, mood = 'happy' } = {}) {
   window.speechSynthesis.cancel();
   document.body.classList.remove('voice-active');
 
-  const clean = text
-    .replace(/\*[^*]+\*/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!clean) {
-    if (withSteps) {
-      const cfg = getStepsConfig(text, mood);
-      if (cfg.shouldPlay) setTimeout(() => playSteps(cfg.type), 220);
-    }
-    return;
-  }
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (!clean) return;
 
   const utt = new SpeechSynthesisUtterance(clean);
   utt.lang = 'es-ES';
-  utt.rate = 0.9;
-  utt.pitch = 1.75;
+  utt.rate = 0.82;
+  utt.pitch = 1.55;
   utt.volume = 0.95;
   if (chopperVoice) utt.voice = chopperVoice;
 
@@ -503,7 +479,7 @@ function speak(text, { withSteps = true, mood = 'happy' } = {}) {
     if (withSteps) {
       const cfg = getStepsConfig(clean, mood);
       if (cfg.shouldPlay) {
-        await new Promise(r => setTimeout(r, 260));
+        await new Promise(r => setTimeout(r, 220));
         playSteps(cfg.type);
       }
     }
@@ -512,11 +488,6 @@ function speak(text, { withSteps = true, mood = 'happy' } = {}) {
   utt.onerror = () => {
     btn.classList.remove('speaking');
     document.body.classList.remove('voice-active');
-
-    if (withSteps) {
-      const cfg = getStepsConfig(clean, mood);
-      if (cfg.shouldPlay) playSteps(cfg.type);
-    }
   };
 
   window.speechSynthesis.speak(utt);
@@ -530,6 +501,16 @@ function setBubble(text) {
   $('bubble').textContent = text;
 }
 
+function setImageSafe(name) {
+  const img = $('chopIMG');
+  img.onerror = () => {
+    img.onerror = null;
+    img.src = '/images/pillin.png';
+    img.style.opacity = '1';
+  };
+  img.src = `/images/${name}.png`;
+}
+
 function applyMood(name) {
   const m = MOODS[name] || MOODS.happy;
   curMood = name;
@@ -539,9 +520,9 @@ function applyMood(name) {
 
   img.style.opacity = '0';
   setTimeout(() => {
-    img.src = `/images/${randomImg}.png`;
+    setImageSafe(randomImg);
     img.style.opacity = '1';
-  }, 180);
+  }, 140);
 
   setBubble(m.bubble);
 
@@ -562,13 +543,10 @@ function applyMood(name) {
 
   const w = $('avatarWrap');
   w.className = 'avatar-wrap';
-
   if (m.anim) {
     void w.offsetWidth;
     w.classList.add('anim-' + m.anim);
-    setTimeout(() => {
-      w.className = 'avatar-wrap anim-idle';
-    }, 850);
+    setTimeout(() => { w.className = 'avatar-wrap anim-idle'; }, 850);
   } else {
     w.classList.add('anim-idle');
   }
@@ -577,38 +555,34 @@ function applyMood(name) {
 function poke() {
   const phrases = [
     '¡Oye! ¡No me toques!',
-    '¡Baka! ¡Para ya!',
+    '¡CALLA!',
     '...¡Eso hace cosquillas!',
-    '¡No soy un juguete!',
-    '¡C-CALLA!'
+    '¡No soy un juguete!'
   ];
   const p = pickVariant(phrases);
+  const mood = /calla/i.test(p) ? 'angry' : 'happy';
   setBubble(p);
-
-  const mood = /calla|baka/i.test(p) ? 'angry' : 'happy';
   applyMood(mood);
   speak(p, { withSteps: false, mood });
-
   setTimeout(() => {
     setBubble((MOODS[curMood] || MOODS.happy).bubble);
-  }, 1800);
+  }, 1600);
 }
 
 function detectMood(t) {
   const text = (t || '').toLowerCase();
 
-  if (/calla|baka|idiota|no digas eso tan directo|no me hables así/.test(text)) return 'angry';
+  if (/calla|no digas eso tan directo|no me hables así/.test(text)) return 'angry';
   if (/vergüenza|n-no|me halagues|no es para tanto|tímido/.test(text)) return 'shy';
   if (/wa|increíble|emocion|genial|fantástico|síí|vamos/.test(text)) return 'excited';
   if (/triste|sniff|extraño|dolor|hiriluk/.test(text)) return 'sad';
   if (/hmm|pensar|déjame ver|no estoy seguro/.test(text)) return 'thinking';
-
   return 'happy';
 }
 
 function fmt(text) {
   return text
-    .replace(/\*[^*]+\*/g, '')
+    .replace(/baka/gi, 'CALLA')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
@@ -625,7 +599,7 @@ function addMsg(role, text) {
   if (role === 'chopper') {
     const mood = detectMood(text);
     applyMood(mood);
-    speak(text, { withSteps: true, mood });
+    speak(text.replace(/baka/gi, 'CALLA'), { withSteps: true, mood });
   }
 }
 
@@ -649,17 +623,20 @@ function setLoading(v) {
 function localReply(text) {
   const t = text.toLowerCase();
 
-  if (/kawaii|adorable|bonito|lindo/.test(t)) {
-    return '¡C-CALLA! ¡No digas eso tan directo! ...Aunque no está tan mal que lo pienses.';
+  if (/guapo|guapa|bonito|bonita|adorable|kawaii/.test(t)) {
+    return '¡CALLA! ¡No digas eso tan directo!... Aunque... no está tan mal escucharlo.';
   }
   if (/hola|buenas/.test(t)) {
-    return '¡Oye! ¡No aparezcas así de repente, baka! Pero... hola.';
+    return '¡Oye! No aparezcas así de repente... pero hola.';
   }
   if (/sueño/.test(t)) {
     return 'Mi sueño es curar cualquier enfermedad del mundo. Quiero ser un médico que pueda salvar a cualquiera.';
   }
   if (/hiriluk|hirluk|hiri/.test(t)) {
     return 'El Dr. Hiriluk me enseñó algo enorme. Que un médico también puede salvar el corazón de una persona.';
+  }
+  if (/qué haces|que haces/.test(t)) {
+    return 'Estoy pensando en medicinas nuevas para ayudar a mis nakama. Y también vigilando que Luffy no coma algo raro otra vez.';
   }
 
   return null;
@@ -701,7 +678,7 @@ async function send() {
     if (!res.ok) throw new Error(data?.error || 'Error del servidor');
 
     let reply = (data.reply || '...').trim();
-    reply = reply.replace(/\*[^*]+\*/g, '');
+    reply = reply.replace(/\*[^*]+\*/g, '').replace(/baka/gi, 'CALLA');
 
     history = [...newHist, { role: 'assistant', content: reply }];
     addMsg('chopper', reply);
