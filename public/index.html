@@ -258,7 +258,6 @@ textarea::placeholder{color:var(--muted)}
 </div>
 
 <div class="main">
-
   <div class="side">
     <div class="avatar-wrap anim-idle" id="avatarWrap" onclick="poke()">
       <div class="bubble" id="bubble">¡HEY!</div>
@@ -312,9 +311,9 @@ let chopperVoice = null;
 let history = [];
 let loading = false;
 let typingEl = null;
-let currentAudio = null;
 
-const stepsAudio = $('stepsAudio');
+const stepsFastAudio = $('stepsFastAudio');
+const stepsSlowAudio = $('stepsSlowAudio');
 
 const MOODS = {
   happy: {
@@ -407,17 +406,61 @@ function toggleVoice() {
   btn.classList.add('on');
 }
 
-function playSteps() {
+function stopStepsAudio() {
+  [stepsFastAudio, stepsSlowAudio].forEach(audio => {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch (e) {}
+  });
+}
+
+function playSteps(type = 'fast') {
   try {
-    stepsAudio.currentTime = 0;
-    stepsAudio.volume = 0.65;
-    stepsAudio.play().catch(() => {});
+    stopStepsAudio();
+
+    const audio = type === 'slow' ? stepsSlowAudio : stepsFastAudio;
+    audio.volume = 0.65;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+
+    const cutMs = type === 'slow' ? 420 : 260;
+
+    setTimeout(() => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (e) {}
+    }, cutMs);
+
   } catch (e) {}
 }
 
-function speak(text, { withSteps = true } = {}) {
+function getStepsConfig(text, mood) {
+  const t = (text || '').toLowerCase();
+
+  const shouldUse =
+    /calla|baka|idiota|tsk|no digas eso|sniff|hmm|espera|oye|no me hables así|vergüenza|decepción|decepcion/.test(t)
+    || ['angry', 'sad', 'shy'].includes(mood);
+
+  if (!shouldUse) return { shouldPlay: false, type: 'fast' };
+
+  if (
+    ['angry', 'sad', 'shy'].includes(mood) ||
+    /decepción|decepcion|vergüenza|sniff|tsk|no me hables así/.test(t)
+  ) {
+    return { shouldPlay: true, type: 'slow' };
+  }
+
+  return { shouldPlay: true, type: 'fast' };
+}
+
+function speak(text, { withSteps = true, mood = 'happy' } = {}) {
   if (!voiceOn) {
-    if (withSteps) setTimeout(playSteps, 250);
+    if (withSteps) {
+      const cfg = getStepsConfig(text, mood);
+      if (cfg.shouldPlay) setTimeout(() => playSteps(cfg.type), 220);
+    }
     return;
   }
 
@@ -430,7 +473,10 @@ function speak(text, { withSteps = true } = {}) {
     .trim();
 
   if (!clean) {
-    if (withSteps) setTimeout(playSteps, 250);
+    if (withSteps) {
+      const cfg = getStepsConfig(text, mood);
+      if (cfg.shouldPlay) setTimeout(() => playSteps(cfg.type), 220);
+    }
     return;
   }
 
@@ -455,15 +501,22 @@ function speak(text, { withSteps = true } = {}) {
     document.body.classList.remove('voice-active');
 
     if (withSteps) {
-      await new Promise(r => setTimeout(r, 350));
-      playSteps();
+      const cfg = getStepsConfig(clean, mood);
+      if (cfg.shouldPlay) {
+        await new Promise(r => setTimeout(r, 260));
+        playSteps(cfg.type);
+      }
     }
   };
 
   utt.onerror = () => {
     btn.classList.remove('speaking');
     document.body.classList.remove('voice-active');
-    if (withSteps) playSteps();
+
+    if (withSteps) {
+      const cfg = getStepsConfig(clean, mood);
+      if (cfg.shouldPlay) playSteps(cfg.type);
+    }
   };
 
   window.speechSynthesis.speak(utt);
@@ -534,7 +587,7 @@ function poke() {
 
   const mood = /calla|baka/i.test(p) ? 'angry' : 'happy';
   applyMood(mood);
-  speak(p, { withSteps: false });
+  speak(p, { withSteps: false, mood });
 
   setTimeout(() => {
     setBubble((MOODS[curMood] || MOODS.happy).bubble);
@@ -547,7 +600,7 @@ function detectMood(t) {
   if (/calla|baka|idiota|no digas eso tan directo|no me hables así/.test(text)) return 'angry';
   if (/vergüenza|n-no|me halagues|no es para tanto|tímido/.test(text)) return 'shy';
   if (/wa|increíble|emocion|genial|fantástico|síí|vamos/.test(text)) return 'excited';
-  if (/triste|sniff|extraño|dolor|hiriluk/i.test(text)) return 'sad';
+  if (/triste|sniff|extraño|dolor|hiriluk/.test(text)) return 'sad';
   if (/hmm|pensar|déjame ver|no estoy seguro/.test(text)) return 'thinking';
 
   return 'happy';
@@ -572,7 +625,7 @@ function addMsg(role, text) {
   if (role === 'chopper') {
     const mood = detectMood(text);
     applyMood(mood);
-    speak(text, { withSteps: true });
+    speak(text, { withSteps: true, mood });
   }
 }
 
@@ -605,7 +658,7 @@ function localReply(text) {
   if (/sueño/.test(t)) {
     return 'Mi sueño es curar cualquier enfermedad del mundo. Quiero ser un médico que pueda salvar a cualquiera.';
   }
-  if (/hిరiluk|hirluk|hirluk|hiri/.test(t) || /hiriluk/.test(t)) {
+  if (/hiriluk|hirluk|hiri/.test(t)) {
     return 'El Dr. Hiriluk me enseñó algo enorme. Que un médico también puede salvar el corazón de una persona.';
   }
 
@@ -632,9 +685,7 @@ async function send() {
   }
 
   setLoading(true);
-
-  const thinkingStates = ['thinking', 'shy', 'happy'];
-  applyMood(pickVariant(thinkingStates));
+  applyMood(pickVariant(['thinking', 'shy', 'happy']));
 
   try {
     const res = await fetch('/api/chat', {
