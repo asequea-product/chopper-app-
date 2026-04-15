@@ -49,16 +49,6 @@ body{
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 
-.voice-btn{
-  background:transparent;border:1px solid var(--border);color:var(--muted);
-  font-family:'Nunito',sans-serif;font-size:.65rem;font-weight:700;
-  padding:4px 10px;border-radius:10px;cursor:pointer;transition:all .2s;
-  letter-spacing:1px;text-transform:uppercase;
-}
-.voice-btn.on{background:#2090d822;border-color:var(--accent);color:var(--accent)}
-.voice-btn.speaking{background:#40c8a822;border-color:#40c8a8;color:#40c8a8;animation:vpulse 1s infinite}
-@keyframes vpulse{0%,100%{opacity:1}50%{opacity:.6}}
-
 .main{
   display:flex;flex:1;overflow:hidden;min-height:0;
 }
@@ -205,13 +195,11 @@ textarea::placeholder{color:var(--muted)}
 @keyframes shake{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-7deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@keyframes talkBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
 .anim-bounce #chopIMG{animation:bounce .7s ease}
 .anim-shake #chopIMG{animation:shake .5s ease}
 .anim-pulse #chopIMG{animation:pulse .6s ease}
 .anim-idle #chopIMG{animation:idle 3s ease-in-out infinite}
-.voice-active #chopIMG{animation:talkBounce .35s infinite;filter:brightness(1.05)}
 
 @media(max-width:900px){
   .main{flex-direction:column}
@@ -253,7 +241,6 @@ textarea::placeholder{color:var(--muted)}
     <div class="topbar-title">⚕ CHOPPER CHAT</div>
     <div class="topbar-sub">Tony Tony Chopper · One Piece</div>
   </div>
-  <button class="voice-btn on" id="voiceBtn" onclick="toggleVoice()">🔊 VOZ</button>
   <div class="online"><div class="dot"></div>EN LÍNEA</div>
 </div>
 
@@ -305,9 +292,6 @@ textarea::placeholder{color:var(--muted)}
 <script>
 const $ = id => document.getElementById(id);
 
-let voiceOn = true;
-let voices = [];
-let chopperVoice = null;
 let history = [];
 let loading = false;
 let typingEl = null;
@@ -318,37 +302,37 @@ const stepsSlowAudio = $('stepsSlowAudio');
 const MOODS = {
   happy: {
     bubble:'¡FELIZ! uwu',
-    variants:['feliz','timido','pillin'],
+    variants:['feliz','timido','pillin','dancing'],
     pill:'p-happy',
     bg:'#f7c948', tc:'#1a0a00', anim:'bounce'
   },
   shy: {
     bubble:'¡CALLA! >//<',
-    variants:['timido','pillin','feliz'],
+    variants:['timido','pillin','feliz','pensando'],
     pill:'p-shy',
     bg:'#f090a0', tc:'#3a0018', anim:'pulse'
   },
   angry: {
     bubble:'¡CALLA!',
-    variants:['enojado','triste','pillin'],
+    variants:['enojado','triste','determinado','pillin'],
     pill:'p-angry',
     bg:'#e63950', tc:'#fff', anim:'shake'
   },
   excited: {
     bubble:'¡WAAAA! ★',
-    variants:['feliz','timido','pillin'],
+    variants:['feliz','dancing','pillin','determinado'],
     pill:'p-excited',
     bg:'#40c8b8', tc:'#001a18', anim:'bounce'
   },
   sad: {
     bubble:'...sniff...',
-    variants:['triste','pillin'],
+    variants:['triste','pensando','pillin'],
     pill:'p-sad',
     bg:'#6688cc', tc:'#fff', anim:'pulse'
   },
   thinking: {
     bubble:'...hmm...',
-    variants:['timido','feliz','pillin'],
+    variants:['pensando','timido','feliz','pillin'],
     pill:'p-thinking',
     bg:'#8870aa', tc:'#fff', anim:null
   }
@@ -365,40 +349,6 @@ No uses descripciones entre asteriscos.
 Mantente siempre en personaje.
 Máximo 3-4 oraciones cortas.`;
 
-function loadVoices() {
-  voices = window.speechSynthesis.getVoices();
-  const preferredMatchers = [
-    v => /^es-ES/i.test(v.lang) && /helena|laura|sabina|monica|paulina/i.test(v.name),
-    v => /^es-/i.test(v.lang) && /female|natural|google|microsoft/i.test(v.name.toLowerCase()),
-    v => /^es-ES/i.test(v.lang),
-    v => /^es-/i.test(v.lang)
-  ];
-  for (const matcher of preferredMatchers) {
-    const found = voices.find(matcher);
-    if (found) {
-      chopperVoice = found;
-      break;
-    }
-  }
-  if (!chopperVoice && voices.length) chopperVoice = voices[0];
-}
-window.speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-function toggleVoice() {
-  voiceOn = !voiceOn;
-  const btn = $('voiceBtn');
-  if (!voiceOn) {
-    btn.textContent = '🔇 VOZ';
-    btn.classList.remove('on', 'speaking');
-    window.speechSynthesis.cancel();
-    document.body.classList.remove('voice-active');
-    return;
-  }
-  btn.textContent = '🔊 VOZ';
-  btn.classList.add('on');
-}
-
 function stopStepsAudio() {
   [stepsFastAudio, stepsSlowAudio].forEach(audio => {
     try {
@@ -412,7 +362,7 @@ function playSteps(type = 'fast') {
   try {
     stopStepsAudio();
     const audio = type === 'slow' ? stepsSlowAudio : stepsFastAudio;
-    audio.volume = 0.7;
+    audio.volume = 0.72;
     audio.currentTime = 0;
     audio.play().catch(() => {});
     const cutMs = type === 'slow' ? 380 : 220;
@@ -429,7 +379,7 @@ function getStepsConfig(text, mood) {
   const t = (text || '').toLowerCase();
 
   const shouldUse =
-    /calla|no digas eso|sniff|hmm|oye|vergüenza|decepción|decepcion|tsk/.test(t)
+    /calla|no digas eso|sniff|hmm|oye|vergüenza|decepción|decepcion|tsk|pasos|pasitos|caminar/.test(t)
     || ['angry', 'sad', 'shy'].includes(mood);
 
   if (!shouldUse) return { shouldPlay: false, type: 'fast' };
@@ -439,58 +389,6 @@ function getStepsConfig(text, mood) {
   }
 
   return { shouldPlay: true, type: 'fast' };
-}
-
-function speak(text, { withSteps = true, mood = 'happy' } = {}) {
-  if (!voiceOn) {
-    if (withSteps) {
-      const cfg = getStepsConfig(text, mood);
-      if (cfg.shouldPlay) setTimeout(() => playSteps(cfg.type), 220);
-    }
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-  document.body.classList.remove('voice-active');
-
-  const clean = text.replace(/\s+/g, ' ').trim();
-  if (!clean) return;
-
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang = 'es-ES';
-  utt.rate = 0.82;
-  utt.pitch = 1.55;
-  utt.volume = 0.95;
-  if (chopperVoice) utt.voice = chopperVoice;
-
-  const btn = $('voiceBtn');
-
-  utt.onstart = () => {
-    btn.textContent = '🔊 VOZ';
-    btn.classList.add('speaking', 'on');
-    document.body.classList.add('voice-active');
-  };
-
-  utt.onend = async () => {
-    btn.classList.remove('speaking');
-    btn.classList.add('on');
-    document.body.classList.remove('voice-active');
-
-    if (withSteps) {
-      const cfg = getStepsConfig(clean, mood);
-      if (cfg.shouldPlay) {
-        await new Promise(r => setTimeout(r, 220));
-        playSteps(cfg.type);
-      }
-    }
-  };
-
-  utt.onerror = () => {
-    btn.classList.remove('speaking');
-    document.body.classList.remove('voice-active');
-  };
-
-  window.speechSynthesis.speak(utt);
 }
 
 function pickVariant(list) {
@@ -557,13 +455,17 @@ function poke() {
     '¡Oye! ¡No me toques!',
     '¡CALLA!',
     '...¡Eso hace cosquillas!',
-    '¡No soy un juguete!'
+    '¡No soy un juguete!',
+    'Hmm...'
   ];
   const p = pickVariant(phrases);
-  const mood = /calla/i.test(p) ? 'angry' : 'happy';
+  const mood = /calla/i.test(p) ? 'angry' : /hmm/i.test(p) ? 'thinking' : 'happy';
   setBubble(p);
   applyMood(mood);
-  speak(p, { withSteps: false, mood });
+
+  const cfg = getStepsConfig(p, mood);
+  if (cfg.shouldPlay) playSteps(cfg.type);
+
   setTimeout(() => {
     setBubble((MOODS[curMood] || MOODS.happy).bubble);
   }, 1600);
@@ -574,7 +476,7 @@ function detectMood(t) {
 
   if (/calla|no digas eso tan directo|no me hables así/.test(text)) return 'angry';
   if (/vergüenza|n-no|me halagues|no es para tanto|tímido/.test(text)) return 'shy';
-  if (/wa|increíble|emocion|genial|fantástico|síí|vamos/.test(text)) return 'excited';
+  if (/wa|increíble|emocion|genial|fantástico|síí|vamos|jeje/.test(text)) return 'excited';
   if (/triste|sniff|extraño|dolor|hiriluk/.test(text)) return 'sad';
   if (/hmm|pensar|déjame ver|no estoy seguro/.test(text)) return 'thinking';
   return 'happy';
@@ -599,7 +501,11 @@ function addMsg(role, text) {
   if (role === 'chopper') {
     const mood = detectMood(text);
     applyMood(mood);
-    speak(text.replace(/baka/gi, 'CALLA'), { withSteps: true, mood });
+
+    const cfg = getStepsConfig(text, mood);
+    if (cfg.shouldPlay) {
+      setTimeout(() => playSteps(cfg.type), 180);
+    }
   }
 }
 
@@ -637,6 +543,9 @@ function localReply(text) {
   }
   if (/qué haces|que haces/.test(t)) {
     return 'Estoy pensando en medicinas nuevas para ayudar a mis nakama. Y también vigilando que Luffy no coma algo raro otra vez.';
+  }
+  if (/pasos|pasitos|camina|caminar/.test(t)) {
+    return '¡Ah! ¿Te refieres a pasos? Mira, mira... puedo moverme rápido o despacito. Eso sí, no me mires tanto.';
   }
 
   return null;
